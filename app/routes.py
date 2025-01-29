@@ -3,8 +3,8 @@ from flask import Flask, render_template, request, jsonify
 import pandas as pd
 
 app = Flask(__name__)
-df = pd.read_csv('C:/Users/kvtts/OneDrive/Desktop/COURS/webscrapping/flask/app/result.csv', sep=',')
-CARBON_INTERFACE_API_KEY = 'ZAVdjq8U5QKDMabJn6wChQ'
+df = pd.read_csv('app/result.csv', sep=',')
+CARBON_INTERFACE_API_KEY = 'BuMbQ6QZeciVnMXTq4qxg'
 
 @app.route('/')
 def home():
