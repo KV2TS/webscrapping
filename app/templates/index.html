@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recherche de vol</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(to bottom, #6dd5ed, #2193b0);
+            color: #fff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        h1 {
+            margin-top: 40px;
+            font-size: 2.5em;
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        form {
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            padding: 30px 25px;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: none;
+            border-radius: 8px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        select:focus {
+            outline: none;
+            box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        button {
+            background-color: #2193b0;
+            color: #fff;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            width: 100%;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #176f84;
+        }
+
+        #result {
+            margin-top: 30px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            padding: 20px;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            color: #333;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #2193b0;
+            color: white;
+        }
+
+        .stars {
+            font-size: 1.2em;
+            color: #FFD700;
+        }
+
+        p {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Recherche de vol</h1>
+    <form id="searchForm">
+        <label for="departure">Ville de départ :</label>
+        <select id="departure" name="departure" required>
+            <!-- Options will be populated dynamically -->
+        </select>
+        <label for="arrival">Ville d'arrivée :</label>
+        <select id="arrival" name="arrival" required>
+            <!-- Options will be populated dynamically -->
+        </select>
+        <button type="submit">Rechercher</button>
+    </form>
+    <div id="result">
+        <table>
+            <thead>
+                <tr>
+                    <th>Trajet</th>
+                    <th>Note Client</th>
+                    <th>Prix</th>
+                    <th>CO2</th>
+                </tr>
+            </thead>
+            <tbody id="resultBody">
+                <!-- Results will be populated dynamically -->
+            </tbody>
+        </table>
+    </div>
+    <script>
+        async function populateDropdowns() {
+            const response = await fetch('/airports');
+            const airports = await response.json();
+            const departureSelect = document.getElementById('departure');
+            const arrivalSelect = document.getElementById('arrival');
+
+            airports.forEach(airport => {
+                const option = document.createElement('option');
+                option.value = airport.city;
+                option.textContent = `${airport.city} (${airport.iata})`;
+                departureSelect.appendChild(option.cloneNode(true));
+                arrivalSelect.appendChild(option);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', populateDropdowns);
+
+        const form = document.getElementById('searchForm');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(form);
+            const response = await fetch('/search', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+
+            const resultBody = document.getElementById('resultBody');
+            resultBody.innerHTML = '';
+
+            if (result.message) {
+                resultBody.innerHTML = `<tr><td colspan="4">${result.message}</td></tr>`;
+            } else {
+                const stars = Array(result.stars).fill('★').join('') + Array(5 - result.stars).fill('☆').join('');
+                const row = `<tr>
+                    <td>${result.departure} → ${result.arrival}</td>
+                    <td class="stars">${stars}</td>
+                    <td>${result.price} €</td>
+                    <td>${result.emissions} g CO₂</td> <!-- Afficher les émissions de CO2 -->
+                </tr>`;
+                resultBody.innerHTML = row;
+            }
+        });
+    </script>
+</body>
+</html>
